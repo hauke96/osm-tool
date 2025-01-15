@@ -37,12 +37,14 @@ osmBusRoutesJsonFileObject = Path(osmBusRoutesJsonFile)
 try:
     osmBusRoutesJsonFileObject.resolve(strict=True)
 except FileNotFoundError:
+    # No local file -> Execute query and store the result
     print(f"Download raw OSM data to {osmBusRoutesJsonFile}")
     response = requests.get(url)
     osmJsonString = response.text
     with open(osmBusRoutesJsonFile, "w") as f:
         f.write(osmJsonString)
 else:
+    # JSON file already exists from prior query execution -> use the existing file
     print(f"File {osmBusRoutesJsonFile} already exists and will be used")
     with open(osmBusRoutesJsonFile, 'r') as f:
         osmJsonString = f.read().replace('\n', '')
@@ -59,6 +61,8 @@ geojsonObjects = []
 for element in osmJson["elements"]:
     ref = element["tags"].get("ref", "").lower()
     name = element["tags"].get("name", "").lower()
+
+    # Ignore certain bus routes like long-distant busses (in Germany mainly FlixBus) or rail-replacement-services (SEV)
     if ref.startswith("n") or \
         "sev" in ref or \
         "flixbus" in name or \
@@ -75,16 +79,15 @@ for element in osmJson["elements"]:
                 newGeometries.append(childGeometry["coordinates"])
         geometry = geojson.MultiLineString(newGeometries)
 
+    osmRouteNumbers.add(ref)
+
     geojsonObject = geojson.Feature(
         geometry = geometry,
         properties = element["tags"]
     )
-
-    osmRouteNumbers.add(ref)
-
     geojsonObjects.append(geojsonObject)
 
-print(f"Write GeoJSON to {osmBusRoutesGeojsonFile}")
+print(f"Write GeoJSON of OSM data to {osmBusRoutesGeojsonFile}")
 geojsonFeatureCollection = geojson.FeatureCollection(geojsonObjects)
 with open(osmBusRoutesGeojsonFile, "w") as f:
     geojson.dump(geojsonFeatureCollection, f, indent=4, sort_keys=True)
@@ -105,7 +108,7 @@ for element in gtfsGeojson["features"]:
     routeNumber = element.properties.get("route_short_name", "").lower()
     routeType = str(element.properties.get("route_type", -1)).lower()
 
-    # route_type 3 means "bus routes"
+    # Only consider LineStrings and bus routes (route_type 3)(
     if "LineString" not in element["geometry"]["type"] or \
         routeType != "3" or \
         "sev" in routeNumber.lower():
@@ -156,13 +159,8 @@ with open(gtfsGeojsonFile, 'r') as f:
 
 elementsToStore = []
 for element in gtfsGeojson["features"]:
-    routeNumber = element.properties.get("route_short_name", None)
-
-    # route_type 3 means "bus routes"
-    #if element["geometry"]["type"] != "LineString" or element.properties["route_type"] != "3" or routeNumber == None or "sev" in routeNumber.lower():
-    #    continue
-
-    if routeNumber != None and routeNumber.lower() in routesOnlyInGtfs:
+    routeNumber = element.properties.get("route_short_name", "")
+    if routeNumber.lower() in routesOnlyInGtfs:
         elementsToStore.append(element)
 
 print(f"Write routes missing in OSM to GeoJSON file {osmMissingBusRoutesGeojsonFile}")
