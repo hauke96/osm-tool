@@ -17,7 +17,7 @@ The following steps are needed:
 
 https://github.com/blinktaginc/gtfs-to-geojson
 
-`npm install gtfs-to-geojson -g`
+`npm install -g gtfs-to-geojson`
 
 ### Usage
 
@@ -36,7 +36,7 @@ This is for the HVV dataset (s. below):
   "agencies": [
     {
       "agency_key": "hvv",
-      "path": "./Upload__hvv_Rohdaten_GTFS_Fpl_20241209.zip"
+      "path": "./Upload__hvv_Rohdaten_GTFS_Fpl_20250108.zip"
     }
   ],
   "bufferSizeMeters": 800,
@@ -49,4 +49,4 @@ This is for the HVV dataset (s. below):
 ## HVV data
 
 The HVV is the network around Hamburg, Germany.
-The GTFS data for 2025 (as of 2024-12-09) is available here: https://daten.transparenz.hamburg.de/Dataport.HmbTG.ZS.Webservice.GetRessource100/GetRessource100.svc/82d4e6d2-ce59-4452-b1f2-64c6c329ffe4/Upload__hvv_Rohdaten_GTFS_Fpl_20241209.ZIP
+The GTFS data for 2025 is available here: https://daten.transparenz.hamburg.de/Dataport.HmbTG.ZS.Webservice.GetRessource100/GetRessource100.svc/dbe5f144-b806-4377-aac3-d3572b139b23/Upload__hvv_Rohdaten_GTFS_Fpl_20250108.ZIP
