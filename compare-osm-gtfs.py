@@ -18,12 +18,15 @@ osmMissingBusRoutesGeojsonFile = "bus-routes-missing-in-osm.geojson"
 # 1. Load OSM data
 #
 
-# Query for whole Germany (relation 3600062782):
+# Area IDs:
+#  Germany: 3600051477
+#  HVV    : 3604189510
+# Add  ["network:short"="HVV"]  if you want to filter not by HVV-area but by tag.
 queryUrlString = urllib.parse.quote("""
 [out:json][timeout:60];
-area(id:3600062782)->.searchArea;
+area(id:3604189510)->.searchArea;
 (
-  relation["route"="bus"]["network:short"="HVV"](area.searchArea);
+  relation["route"="bus"](area.searchArea);
 );
 convert item ::=::,::geom=geom(),_osm_type=type();
 out geom;
