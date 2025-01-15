@@ -50,7 +50,7 @@ else:
 
 osmRouteNumbers = set()
 
-print("Create GeoJSON")
+print("Create GeoJSON of OSM data")
 osmJson = json.loads(osmJsonString)
 geojsonObjects = []
 for element in osmJson["elements"]:
@@ -62,8 +62,18 @@ for element in osmJson["elements"]:
         not "geometry" in element:
         continue
 
+    geometry = element["geometry"]
+
+    # Unwrap OSM LineStrings, which consist of Point and LineString geometries. We only want the routes, so only the lines themselves.
+    if geometry["type"] == "GeometryCollection":
+        newGeometries = []
+        for childGeometry in geometry["geometries"]:
+            if childGeometry["type"] == "LineString":
+                newGeometries.append(childGeometry["coordinates"])
+        geometry = geojson.MultiLineString(newGeometries)
+
     geojsonObject = geojson.Feature(
-        geometry = element["geometry"],
+        geometry = geometry,
         properties = element["tags"]
     )
 
