@@ -67,7 +67,7 @@ for element in osmJson["elements"]:
         properties = element["tags"]
     )
 
-    osmRouteNumbers.add(element["tags"]["ref"])
+    osmRouteNumbers.add(ref)
 
     geojsonObjects.append(geojsonObject)
 
@@ -89,11 +89,12 @@ with open(gtfsGeojsonFile, 'r') as f:
     gtfsGeojson = geojson.loads(f.read())
 
 for element in gtfsGeojson["features"]:
-    routeNumber = element.properties.get("route_short_name", "")
+    routeNumber = element.properties.get("route_short_name", "").lower()
+    routeType = str(element.properties.get("route_type", -1)).lower()
 
     # route_type 3 means "bus routes"
-    if element["geometry"]["type"] != "LineString" or \
-        element.properties["route_type"] != "3" or \
+    if "LineString" not in element["geometry"]["type"] or \
+        routeType != "3" or \
         "sev" in routeNumber.lower():
         continue
 
@@ -148,7 +149,7 @@ for element in gtfsGeojson["features"]:
     #if element["geometry"]["type"] != "LineString" or element.properties["route_type"] != "3" or routeNumber == None or "sev" in routeNumber.lower():
     #    continue
 
-    if routeNumber != None and routeNumber in routesOnlyInGtfs:
+    if routeNumber != None and routeNumber.lower() in routesOnlyInGtfs:
         elementsToStore.append(element)
 
 print(f"Write routes missing in OSM to GeoJSON file {osmMissingBusRoutesGeojsonFile}")
