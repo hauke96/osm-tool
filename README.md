@@ -13,6 +13,11 @@ The following steps are needed:
 2. Convert the GTFS dataset into a GeoJSON file (see steps below)
 3. Run the script: `./compare-osm-gtfs.py ./path/to/gtfs.geojson`
 
+### Simplify GeoJSON files
+
+The output files can be quite large.
+Simplifying them with `ogr2ogr` might be a good idea when create a simple overview map: `ogr2ogr -f geojson simplified.geojson original.geojson -simplify 0.0002`
+
 ## GTFS to GeoJSON
 
 https://github.com/blinktaginc/gtfs-to-geojson
