@@ -12,22 +12,24 @@ from shapely.geometry import Polygon
 # For number formatting:
 locale.setlocale(locale.LC_ALL, '')
 
-cellSize = 0.002 # in lat/lon
 osmPbfFile = "./data.osm.pbf"
 outputFile = "output.gpkg"
 now = datetime.now()
 
 if len(sys.argv) == 1:
-    print("Usage: python3 %s <pbf-path>" % sys.argv[0])
+    print("Usage: python3 %s <pbf-path> <cell-size-in-deg>" % sys.argv[0])
     print()
-    print("pbf-path: Path within the Geofabrik-URL to download a file. The URL is constructed as follows: https://download.geofabrik.de/{pbf-path}-latest.osm.pbf")
+    print("Parameters:")
+    print("  pbf-path: Path within the Geofabrik-URL to download a file. The URL is constructed as follows: https://download.geofabrik.de/{pbf-path}-latest.osm.pbf")
+    print("  cell-size-in-deg: Size of the output cells in degree (e.g. a value of '1' means one latitude degree in width and 1 longitude degree in height)")
     print()
-    print("Example: python3 %s europe/germany/hamburg")
+    print("Example: python3 %s europe/germany/hamburg 0.002" % sys.argv[0])
     print("This uses the URL https://download.geofabrik.de/europe/germany/hamburg-latest.osm.pbf")
     sys.exit(-1)
 
 # e.g. "europe/germany/hamburg" for https://download.geofabrik.de/europe/germany/hamburg-latest.osm.pbf
 osmPbfUrlPath = sys.argv[1]
+cellSize = float(sys.argv[1])
 
 url = f"https://download.geofabrik.de/{osmPbfUrlPath}-latest.osm.pbf"
 
