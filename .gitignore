@@ -1,3 +1,5 @@
 *.geojson
+*.pbf
+*.gpkg
 *.json
 *.zip
