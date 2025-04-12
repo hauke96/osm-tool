@@ -8,6 +8,7 @@ from datetime import datetime
 import locale
 import geopandas as gpd
 from shapely.geometry import Polygon
+import time
 
 # For number formatting:
 locale.setlocale(locale.LC_ALL, '')
@@ -29,7 +30,7 @@ if len(sys.argv) == 1:
 
 # e.g. "europe/germany/hamburg" for https://download.geofabrik.de/europe/germany/hamburg-latest.osm.pbf
 osmPbfUrlPath = sys.argv[1]
-cellSize = float(sys.argv[1])
+cellSize = float(sys.argv[2])
 
 url = f"https://download.geofabrik.de/{osmPbfUrlPath}-latest.osm.pbf"
 
@@ -75,13 +76,14 @@ print("Start processing OSM objects")
 cells = {}
 processedNodes = 0
 processedWays = 0
+start = time.time()
 for obj in osmium.FileProcessor(osmPbfFile).with_locations():
     match obj.type_str():
         case "n":
             if processedNodes == 0:
                 print("Start processing nodes")
 
-            cellIndex = (int(obj.lon / cellSize), int(obj.lat % cellSize))
+            cellIndex = (int(obj.lon / cellSize), int(obj.lat / cellSize))
 
             # Add cell is not exists
             if cellIndex not in cells:
@@ -113,8 +115,11 @@ for obj in osmium.FileProcessor(osmPbfFile).with_locations():
             processedWays += 1
             if processedWays % 100000 == 0:
                 print(f"Processed {processedWays:n} ways")
-print("Done processing OSM objects")
-print(f"  Processed {processedNodes} nodes and {processedWays} ways ({processedNodes + processedWays} objects in total)")
+end = time.time()
+totalNumberOfObjects = processedNodes + processedWays
+durationInS = end - start
+print(f"Done processing OSM objects within {durationInS:.2f}s ({(durationInS / totalNumberOfObjects)*100000:.2f}s per 100k)")
+print(f"  Processed {processedNodes} nodes and {processedWays} ways ({totalNumberOfObjects} objects in total)")
 
 print("Generate features for cells")
 cellData = []
