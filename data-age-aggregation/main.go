@@ -9,6 +9,7 @@ import (
 	"github.com/paulmach/osm"
 	"github.com/paulmach/osm/osmpbf"
 	"github.com/pkg/errors"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -23,13 +24,13 @@ type Cell struct {
 	numberOfObjects int
 	ageMin          int
 	ageMax          int
-	ageAvg          int
+	ageAvg          float64
 }
 
 func (c *Cell) add(ageInDays int) {
 	c.ageMin = min(c.ageMin, ageInDays)
 	c.ageMax = max(c.ageMax, ageInDays)
-	c.ageAvg = (c.ageAvg*c.numberOfObjects + ageInDays) / (c.numberOfObjects + 1)
+	c.ageAvg = (c.ageAvg*float64(c.numberOfObjects) + float64(ageInDays)) / float64(c.numberOfObjects+1)
 	c.numberOfObjects += 1
 }
 
@@ -149,7 +150,7 @@ func processObject(x int, y int, cells map[CellIndex]*Cell, now time.Time, times
 			numberOfObjects: 0,
 			ageMin:          999999, // >2700 years
 			ageMax:          0,
-			ageAvg:          0,
+			ageAvg:          0.0,
 		}
 	}
 
@@ -157,9 +158,9 @@ func processObject(x int, y int, cells map[CellIndex]*Cell, now time.Time, times
 }
 
 func storeToGeoJsonFile(cells map[CellIndex]*Cell) {
-	featureTemplate := `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f]]]},"properties":{"numberOfObject":"%d","ageMin":"%d","ageMax":"%d","ageAvg":"%d"}},` + "\n"
+	featureTemplate := `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f]]]},"properties":{"numberOfObjects":%d,"ageMin":%d,"ageMax":%d,"ageAvg":%d}},` + "\n"
 
-	file, err := os.OpenFile("output.geojson", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	file, err := os.OpenFile("output.geojson", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	sigolo.FatalCheck(err)
 	defer file.Close()
 	writer := bufio.NewWriter(file)
@@ -183,7 +184,7 @@ func storeToGeoJsonFile(cells map[CellIndex]*Cell) {
 			cell.numberOfObjects,
 			cell.ageMin,
 			cell.ageMax,
-			cell.ageAvg,
+			int(math.Round(cell.ageAvg)),
 		)
 
 		if i == len(cells)-1 {
