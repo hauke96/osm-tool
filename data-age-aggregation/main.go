@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/hauke96/sigolo/v2"
@@ -156,16 +157,16 @@ func processObject(x int, y int, cells map[CellIndex]*Cell, now time.Time, times
 }
 
 func storeToGeoJsonFile(cells map[CellIndex]*Cell) {
-	featureTemplate := `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f]]]},"properties":{"numberOfObject":"%d","ageMin":"%d","ageMax":"%d","ageAvg":"%d"}}`
-	template := `{
-"type": "FeatureCollection",
-"features": [
-%s
-]
-}
-`
+	featureTemplate := `{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f],[%.4f,%.4f]]]},"properties":{"numberOfObject":"%d","ageMin":"%d","ageMax":"%d","ageAvg":"%d"}},` + "\n"
 
-	var featureStrings = make([]string, len(cells))
+	file, err := os.OpenFile("output.geojson", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	sigolo.FatalCheck(err)
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+
+	_, err = writer.WriteString(`{"type": "FeatureCollection","features": [` + "\n")
+	sigolo.FatalCheck(err)
+
 	i := 0
 	for _, cell := range cells {
 		minX := float64(cell.x) * cellSize
@@ -173,7 +174,7 @@ func storeToGeoJsonFile(cells map[CellIndex]*Cell) {
 		maxX := minX + cellSize
 		maxY := minY + cellSize
 
-		featureStrings[i] = fmt.Sprintf(featureTemplate,
+		featureString := fmt.Sprintf(featureTemplate,
 			minX, minY,
 			minX, maxY,
 			maxX, maxY,
@@ -185,12 +186,19 @@ func storeToGeoJsonFile(cells map[CellIndex]*Cell) {
 			cell.ageAvg,
 		)
 
+		if i == len(cells)-1 {
+			featureString = strings.TrimSuffix(featureString, ",\n") + "\n"
+		}
+
+		_, err = writer.WriteString(featureString)
+		sigolo.FatalCheck(err)
+
 		i++
 	}
 
-	allFeaturesString := strings.Join(featureStrings, ",\n")
-	geoJsonString := fmt.Sprintf(template, allFeaturesString)
+	_, err = writer.WriteString("]}")
+	sigolo.FatalCheck(err)
 
-	err := os.WriteFile("output.geojson", []byte(geoJsonString), 0644)
+	err = writer.Flush()
 	sigolo.FatalCheck(err)
 }
